@@ -5,18 +5,34 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.io.InputStream;
+import java.util.Properties;
 
 public class Conexao {
-    private static final String URL = "jdbc:mysql://localhost:3306/AnunciosImoveis";
-    private static final String USER = "root";
-    private static final String PASSWORD = "4444";
 
     public static Connection getConnection() {
-        try {
-            return DriverManager.getConnection(URL, USER, PASSWORD);
+        Connection connection = null;
+        try (InputStream input = Conexao.class.getClassLoader().getResourceAsStream("db.properties")) {
+            Properties prop = new Properties();
+            
+            if (input == null) {
+                System.out.println("Desculpe, o arquivo db.properties não foi encontrado.");
+                return null;
+            }
+
+            prop.load(input);
+
+            String url = prop.getProperty("db.url");
+            String user = prop.getProperty("db.username");
+            String password = prop.getProperty("db.password");
+
+            connection = DriverManager.getConnection(url, user, password);
         } catch (SQLException e) {
             throw new RuntimeException("Erro ao conectar com o banco de dados: " + e.getMessage(), e);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        return connection;
     }
 
     public static void closeConnection(Connection conn, PreparedStatement stmt, ResultSet rs) {
